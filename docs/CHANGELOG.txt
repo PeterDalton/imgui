@@ -74,8 +74,9 @@ Other Changes:
     hasn't been owned by another items. This is more correct and also necessary
     to avoid Drags/Sliders cancelling also triggering a cancel menu. (#8564, #9534)
 - Misc:
-  - Added `ImGuiItemFlags_MixedValue` flag for representing mixed/indeterminate values
-    in Checkbox(), RadioButton(), DragXXX(), SliderXXX(), InputXXX(), Combo() functions.
+  - Added `ImGuiItemFlags_MixedValue` flag for representing mixed/indeterminate values.
+    Supported by: Checkbox(), RadioButton(), DragXXX(), SliderXXX(), InputXXX(), ColorXXX()
+    and Combo() functions.
     The scoped flag is designed for usage by advanced property editors. (#5518, #5677, #6865)
   - Fixed `GetBackgroundDrawList()`/`GetForegroundDrawList()` not being properly reset
     every frame when cumulated session time is very large (e.g. a few days). [@lailoken]

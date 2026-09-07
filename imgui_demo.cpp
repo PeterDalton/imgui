@@ -2085,9 +2085,9 @@ static void DemoWindowWidgetsMixedValues()
         ImGui::InputFloat("item 1", &items[1]);
         ImGui::InputFloat("item 2", &items[2]);
 
-        // Demonstrate Checkbox()
-        // (this is automatically used by e.g. CheckboxFlags())
+        // Demonstrate Checkbox(), RadioButton(), Combo(), ColorEdit4()
         ImGui::SeparatorText("Others Widgets");
+        ImGui::Text("(note: edits are not applied in this demo)"); // <-- Would need more state tracking.
         bool b_on = true, b_off = false;
         ImGui::Checkbox("Checkbox On", &b_on);
         ImGui::Checkbox("Checkbox Off", &b_off);
@@ -2098,6 +2098,8 @@ static void DemoWindowWidgetsMixedValues()
         ImGui::RadioButton("RadioButton Mixed##2", true); // Showing 2 radio buttons makes the example more clear
         int combo_idx = 0;
         ImGui::Combo("Combo", &combo_idx, "One\0Two\0Three\0");
+        ImVec4 color(0.5f, 0.5f, 0.5f, 0.5f);
+        ImGui::ColorEdit4("ColorEdit4", &color.x);
         ImGui::PopItemFlag();
 
         ImGui::TreePop();
