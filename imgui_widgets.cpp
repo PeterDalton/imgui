@@ -2665,10 +2665,10 @@ static bool ShortcutsForCancel(ImGuiID id)
     ImGuiContext& g = *GImGui;
     bool is_cancel_with_keyboard = ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_None, id);
     bool is_cancel_with_gamepad = (g.IO.ConfigFlags & ImGuiConfigFlags_NavEnableGamepad) != 0 && (g.IO.BackendFlags & ImGuiBackendFlags_HasGamepad) != 0 && ImGui::Shortcut(ImGuiKey_NavGamepadCancel, ImGuiInputFlags_None, id);
-    //bool is_cancel_with_mouse = ImGui::IsMouseClicked(ImGuiMouseButton_Right, ImGuiInputFlags_None, id);
-    //if (is_cancel_with_mouse)
-    //    ImGui::SetKeyOwner(ImGuiKey_MouseRight, id);
-    return is_cancel_with_keyboard || is_cancel_with_gamepad; //|| is_cancel_with_mouse
+    bool is_cancel_with_mouse = ImGui::IsMouseReleased(ImGuiMouseButton_Right, id);
+    if (is_cancel_with_mouse)
+        ImGui::SetKeyOwner(ImGuiKey_MouseRight, id);
+    return is_cancel_with_keyboard || is_cancel_with_gamepad || is_cancel_with_mouse;
 }
 
 bool ImGui::DragBehavior(ImGuiID id, ImGuiDataType data_type, void* p_v, float v_speed, const void* p_min, const void* p_max, const char* format, ImGuiSliderFlags flags)
