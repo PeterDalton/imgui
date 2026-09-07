@@ -55,7 +55,7 @@ Other Changes:
 - Drags, Sliders:
   - Fixed an overflow using `ImGuiSliderFlags_Logarithmic` with S32/S64 types which
     leads to clamped interactions. (#9526, #3361, #1823, #1316, #642) [@lailoken]
-  - Ongoing drags may be cancelled using right-mouse button, Escape, Gamepad Triangle.
+  - Ongoing drags may be cancelled using Right-Click, Escape or Gamepad Triangle.
     Cancelling reverts to the initial value. (#8564, #9534)
 - TreeNode:
   - Fixed issues/asserts with 32+ deep trees when using ImGuiTreeNodeFlags_DrawLinesXXX
@@ -69,6 +69,10 @@ Other Changes:
     disabled color buttons have the same color as non-disabled oness. (#9511)
   - ColorButton: fixed issues/inconsistencies with checkerboard rendering when combining
     color alpha and global style alpha. (#9511) [@enjmiah, @ocornut]
+- Popups:
+  - Amended context menu right-click opening code to check that the right-click
+    hasn't been owned by another items. This is more correct and also necessary
+    to avoid Drags/Sliders cancelling also triggering a cancel menu. (#8564, #9534)
 - Misc:
   - Fixed `GetBackgroundDrawList()`/`GetForegroundDrawList()` not being properly reset
     every frame when cumulated session time is very large (e.g. a few days). [@lailoken]
