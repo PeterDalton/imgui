@@ -4380,6 +4380,7 @@ ImGuiContext::ImGuiContext(ImFontAtlas* shared_font_atlas)
     MouseCursor = ImGuiMouseCursor_Arrow;
     MouseStationaryTimer = 0.0f;
 
+    MixedValueLabel = "-";
     InputTextPasswordFontBackupFlags = ImFontFlags_None;
     InputTextReactivateId = 0;
     TempInputId = 0;

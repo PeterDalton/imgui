@@ -74,6 +74,9 @@ Other Changes:
     hasn't been owned by another items. This is more correct and also necessary
     to avoid Drags/Sliders cancelling also triggering a cancel menu. (#8564, #9534)
 - Misc:
+  - Added `ImGuiItemFlags_MixedValue` flag for representing mixed/indeterminate values
+    in Checkbox(), RadioButton(), DragXXX(), SliderXXX(), InputXXX(), Combo() functions.
+    The scoped flag is designed for usage by advanced property editors. (#5518, #5677, #6865)
   - Fixed `GetBackgroundDrawList()`/`GetForegroundDrawList()` not being properly reset
     every frame when cumulated session time is very large (e.g. a few days). [@lailoken]
   - Added `IM_NODEBUGSTEP` helper to tag functions with `__declspec(non_user_code)` (MSVC)
@@ -90,6 +93,8 @@ Other Changes:
   - Reworked assert in PushTexture() to allow convenience grace period of using a
     texture that was queue for destroy during the frame. Make it safe to stick to
     an existing texture during the frame. (#9528, #8465)
+- Demo:
+  - Added `Widgets->Mixed Values` section. (#5518, #5677, #6865)
 - Backends:
   - QNX: added QNX Screen backend. (#9492) [@mgorchak-blackberry]
   - SDL2: fixed querying framebuffer scale/density when using Metal without

@@ -1398,7 +1398,7 @@ bool ImGui::RadioButton(const char* label, bool active)
     RenderNavCursor(total_bb, id);
     const int num_segment = window->DrawList->_CalcCircleAutoSegmentCount(radius);
     window->DrawList->AddCircleFilled(center, radius, GetColorU32((held && hovered) ? ImGuiCol_FrameBgActive : hovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg), num_segment);
-    if (active)
+    if (active && (g.LastItemData.ItemFlags & ImGuiItemFlags_MixedValue) == 0)
     {
         const float pad = ImMax(1.0f, IM_TRUNC(square_sz / 6.0f));
         window->DrawList->AddCircleFilled(center, radius - pad, GetColorU32(ImGuiCol_CheckMark));
@@ -2176,7 +2176,9 @@ bool ImGui::Combo(const char* label, int* current_item, const char* (*getter)(vo
 
     // Call the getter to obtain the preview string which is a parameter to BeginCombo()
     const char* preview_value = NULL;
-    if (*current_item >= 0 && *current_item < items_count)
+    if ((g.NextItemData.ItemFlagsSet | g.CurrentItemFlags) & ImGuiItemFlags_MixedValue)
+        preview_value = "";
+    else if (*current_item >= 0 && *current_item < items_count)
         preview_value = getter(user_data, *current_item);
 
     // The old Combo() API exposed "popup_max_height_in_items". The new more general BeginCombo() API doesn't have/need it, but we emulate it here.
@@ -2815,8 +2817,9 @@ bool ImGui::DragScalar(const char* label, ImGuiDataType data_type, void* p_data,
         MarkItemEdited(id);
 
     // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
+    const char* format_for_display = (g.LastItemData.ItemFlags & ImGuiItemFlags_MixedValue) ? g.MixedValueLabel : format;
     char value_buf[64];
-    const char* value_buf_end = value_buf + DataTypeFormatString(value_buf, IM_COUNTOF(value_buf), data_type, p_data, format);
+    const char* value_buf_end = value_buf + DataTypeFormatString(value_buf, IM_COUNTOF(value_buf), data_type, p_data, format_for_display);
     if (g.LogEnabled)
         LogSetNextTextDecoration("{", "}");
     RenderTextClipped(frame_bb.Min, frame_bb.Max, value_buf, value_buf_end, NULL, ImVec2(0.5f, 0.5f));
@@ -3422,8 +3425,9 @@ bool ImGui::SliderScalar(const char* label, ImGuiDataType data_type, void* p_dat
         window->DrawList->AddRectFilled(grab_bb.Min, grab_bb.Max, GetColorU32(g.ActiveId == id ? ImGuiCol_SliderGrabActive : ImGuiCol_SliderGrab), style.GrabRounding);
 
     // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
+    const char* format_for_display = (g.LastItemData.ItemFlags & ImGuiItemFlags_MixedValue) ? g.MixedValueLabel : format;
     char value_buf[64];
-    const char* value_buf_end = value_buf + DataTypeFormatString(value_buf, IM_COUNTOF(value_buf), data_type, p_data, format);
+    const char* value_buf_end = value_buf + DataTypeFormatString(value_buf, IM_COUNTOF(value_buf), data_type, p_data, format_for_display);
     if (g.LogEnabled)
         LogSetNextTextDecoration("{", "}");
     RenderTextClipped(frame_bb.Min, frame_bb.Max, value_buf, value_buf_end, NULL, ImVec2(0.5f, 0.5f));
@@ -3576,8 +3580,9 @@ bool ImGui::VSliderScalar(const char* label, const ImVec2& size, ImGuiDataType d
 
     // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
     // For the vertical slider we allow centered text to overlap the frame padding
+    const char* format_for_display = (g.LastItemData.ItemFlags & ImGuiItemFlags_MixedValue) ? g.MixedValueLabel : format;
     char value_buf[64];
-    const char* value_buf_end = value_buf + DataTypeFormatString(value_buf, IM_COUNTOF(value_buf), data_type, p_data, format);
+    const char* value_buf_end = value_buf + DataTypeFormatString(value_buf, IM_COUNTOF(value_buf), data_type, p_data, format_for_display);
     RenderTextClipped(ImVec2(frame_bb.Min.x, frame_bb.Min.y + style.FramePadding.y), frame_bb.Max, value_buf, value_buf_end, NULL, ImVec2(0.5f, 0.0f));
     if (label_size.x > 0.0f)
         RenderText(ImVec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y), label, label_end, false);
@@ -3815,7 +3820,7 @@ bool ImGui::TempInputScalar(const ImRect& bb, ImGuiID id, const char* label, ImG
 
     // Only mark as edited if new value is different
     g.LastItemData.ItemFlags &= ~ImGuiItemFlags_NoMarkEdited;
-    bool value_changed = memcmp(&data_backup, p_data, data_type_size) != 0;
+    bool value_changed = memcmp(&data_backup, p_data, data_type_size) != 0 || (g.LastItemData.ItemFlags & ImGuiItemFlags_MixedValue);
     if (value_changed)
         MarkItemEdited(id);
     return value_changed;
@@ -3892,6 +3897,8 @@ bool ImGui::InputScalar(const char* label, ImGuiDataType data_type, void* p_data
             value_changed = DataTypeApplyFromText(buf, data_type, p_data, format, (flags & ImGuiInputTextFlags_ParseEmptyRefVal) ? p_data_default : NULL);
         }
     }
+    if (g.LastItemData.ItemFlags & ImGuiItemFlags_MixedValue)
+        value_changed |= ret;
 
     // Step buttons
     if (has_step_buttons)
@@ -4857,6 +4864,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
     const bool is_password = (flags & ImGuiInputTextFlags_Password) != 0;
     const bool is_undoable = (flags & ImGuiInputTextFlags_NoUndoRedo) == 0;
     const bool is_resizable = (flags & ImGuiInputTextFlags_CallbackResize) != 0;
+    const bool is_mixed = (g.LastItemData.ItemFlags & ImGuiItemFlags_MixedValue) != 0;
     if (is_resizable)
         IM_ASSERT(callback != NULL); // Must provide a callback if you set the ImGuiInputTextFlags_CallbackResize flag!
 
@@ -5021,7 +5029,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
 
     // Select the buffer to render.
     const bool buf_display_from_state = (render_cursor || render_selection || g.ActiveId == id) && !is_readonly && state;
-    bool is_displaying_hint = (hint != NULL && (buf_display_from_state ? state->TextA.Data : buf)[0] == 0);
+    bool is_displaying_hint = (hint != NULL && (buf_display_from_state ? state->TextA.Data : buf)[0] == 0) && !is_mixed;
 
     // Password pushes a temporary font with only a fallback glyph
     if (is_password && !is_displaying_hint)
@@ -5448,7 +5456,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
             if (g.LastItemData.ItemFlags & ImGuiItemFlags_LiveEditOnInputText)
             {
                 // Apply when modified
-                if (strcmp(state->TextSrc, buf) != 0)
+                if (strcmp(state->TextSrc, buf) != 0 || (is_mixed && validated))
                 {
                     apply_new_text = state->TextSrc;
                     apply_new_text_length = state->TextLen;
@@ -5458,7 +5466,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
             else
             {
                 // Apply on validation/deactivation, otherwise cancel out previous apply attempts (e.g. revert)
-                value_changed = ((validated || clear_active_id || revert_edit) && strcmp(state->TextSrc, buf) != 0);
+                value_changed = (validated || clear_active_id || revert_edit) && (strcmp(state->TextSrc, buf) != 0 || (is_mixed && validated));
                 apply_new_text = value_changed ? state->TextSrc : NULL;
                 apply_new_text_length = value_changed ? state->TextLen : 0;
             }
@@ -5543,7 +5551,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
 
     // Display hint when contents is empty
     // At this point we need to handle the possibility that a callback could have modified the underlying buffer (#8368)
-    const bool new_is_displaying_hint = (hint != NULL && (buf_display_from_state ? state->TextA.Data : buf)[0] == 0);
+    const bool new_is_displaying_hint = (hint != NULL && (buf_display_from_state ? state->TextA.Data : buf)[0] == 0) && !is_mixed;
     if (new_is_displaying_hint != is_displaying_hint)
     {
         if (is_password && !is_displaying_hint)
@@ -5552,10 +5560,16 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
         if (is_password && !is_displaying_hint)
             PushPasswordFont();
     }
-    if (is_displaying_hint)
+    if (is_mixed && g.ActiveId != id && apply_new_text == NULL)
+    {
+        buf_display = g.MixedValueLabel;
+        buf_display_end = buf_display + strlen(g.MixedValueLabel);
+        render_cursor = render_selection = false;
+    }
+    else if (is_displaying_hint)
     {
         buf_display = hint;
-        buf_display_end = hint + ImStrlen(hint);
+        buf_display_end = buf_display + ImStrlen(buf_display);
     }
     else
     {
